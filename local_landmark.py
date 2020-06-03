@@ -7,7 +7,7 @@ detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
 # Hyperparameter
-resize_size = 400.
+resize_size = 200.
 
 while(True):
     # Capture frame-by-frame
