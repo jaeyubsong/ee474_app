@@ -5,3 +5,5 @@ shape_predictor_68_face_landmarks.dat.bz2
 !*.py
 !README.md
 !environment.yml
+!res/mask
+!res/mask/*
