@@ -2,11 +2,17 @@ shape_predictor_68_face_landmarks.dat
 shape_predictor_68_face_landmarks.dat.bz2
 *
 !.gitignore
-!*.py
 !README.md
-!environment.yml
-!res/
-!res/*
-!res/*/*
-!templates/
-!templates/*
+
+# react
+!front/
+
+# Server
+!server/
+!server/*.py
+!server/environment.yml
+!server/res/
+!server/res/*
+!server/res/*/*
+!server/templates/
+!server/templates/*

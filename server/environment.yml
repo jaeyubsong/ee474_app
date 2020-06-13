@@ -78,4 +78,5 @@ dependencies:
   - zstd=1.4.4=h4b3e974_3
   - pip:
     - dlib==19.19.0
+prefix: /Users/jaeyubsong/opt/anaconda3/envs/ee474_server
 
