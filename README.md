@@ -13,6 +13,7 @@ Let's set up the environment
 
 - anaconda
 - npm
+- nodejs
 
 ### Setting up the environment
 - Setup anaconda environment
