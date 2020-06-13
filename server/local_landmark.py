@@ -232,7 +232,7 @@ class FaceMask:
         self.cam.update_frame()
         self.detector.detect(self.cam.get_curFrame())
     
-    def show_frame(self, maskType=None):
+    def show_frame(self, maskType=None, showMask=False):
         global surgical_mask
         curFrame = self.cam.get_curFrame()
         if MODE == DEBUGMODE:
@@ -253,7 +253,7 @@ class FaceMask:
             cv2.imshow('original', curFrame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 exit()
-        if MODE == MASKMODE:
+        elif MODE == MASKMODE and showMask == True:
             landmarks = self.detector.get_org_feature()
             # print(landmarks)
             for i in range(len(landmarks)):
@@ -274,6 +274,10 @@ class FaceMask:
             # cv2.imshow('original', curFrame)
             # if cv2.waitKey(1) & 0xFF == ord('q'):
             #     exit()
+        elif showMask == False:
+            curFrame = cv2.flip(curFrame, 1)
+            ret, jpeg = cv2.imencode('.jpg', curFrame)
+            return jpeg.tobytes()
 
     def main(self):
         global surgical_mask

@@ -1,34 +1,63 @@
-from flask import Flask, Response, render_template
+from flask import Flask, Response, render_template, request, jsonify
+import logging
 from local_landmark import FaceMask
+import threading
+
+lock = threading.Lock()
 app = Flask(__name__)
 
 faceMask = FaceMask()
 
 # Global variabble
 SURGICAL_MASK = 1
+SHOWMASK = True
+CUR_MASK = SURGICAL_MASK
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-def get_frame(maskType):
+def get_frame(maskType=CUR_MASK, showMask=SHOWMASK):
+    global lock
     global faceMask 
     while True:
-        #get camera frame
-        faceMask.update_frame()
-        frame = faceMask.show_frame(maskType)
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+        with lock:
+            #get camera frame
+            faceMask.update_frame()
+            frame = faceMask.show_frame(maskType, SHOWMASK)
+            yield (b'--frame\r\n'
+                  b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
 
 
-@app.route('/video_feed')
-def video_feed():
-    return Response(get_frame(maskType=SURGICAL_MASK),
+@app.route('/stream', methods=['GET'])
+def stream():
+    return Response(get_frame(maskType=CUR_MASK),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/<name>')
-def hello_name(name):
-    return "Hello {}!".format(name)
+
+@app.route('/showMask', methods=['POST'])
+def showMask():
+    global SHOWMASK
+    received = request.form.to_dict()
+    print(received)
+    if 'showMask' not in received:
+        print("Inappropriate post request")
+        exit()
+    if received['showMask'] == 'false':
+        print("Inside false")
+        SHOWMASK = False
+    elif received['showMask'] == 'true':
+        print("inside true")
+        SHOWMASK = True
+    else:
+        print("Inappropriate post request")
+        print(received)
+        exit()   
+    print("Showmask is %r" % SHOWMASK)
+    response = jsonify({'result': 'success', 'maskStatus': received})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    app.logger.info(response)
+    return response
 
 
 if __name__ == '__main__':
