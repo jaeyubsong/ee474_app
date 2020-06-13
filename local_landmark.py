@@ -170,10 +170,14 @@ class Detector:
             # Detect headpose
             nose_tip = self.feature[i]['landmark'][33]
             chin = self.feature[i]['landmark'][8]
-            left_eye_left_corner = self.feature[i]['landmark'][45]
-            right_eye_right_corner = self.feature[i]['landmark'][36]
-            left_mouth_corner = self.feature[i]['landmark'][54]
-            right_mouth_corner = self.feature[i]['landmark'][48]
+            # left_eye_left_corner = self.feature[i]['landmark'][45]
+            # right_eye_right_corner = self.feature[i]['landmark'][36]
+            # left_mouth_corner = self.feature[i]['landmark'][54]
+            # right_mouth_corner = self.feature[i]['landmark'][48]
+            right_eye_right_corner = self.feature[i]['landmark'][45]
+            left_eye_left_corner = self.feature[i]['landmark'][36]
+            right_mouth_corner = self.feature[i]['landmark'][54]
+            left_mouth_corner = self.feature[i]['landmark'][48]
             image_points = np.array([
                 (nose_tip[0], nose_tip[1]),
                 (chin[0], chin[1]),
@@ -186,6 +190,10 @@ class Detector:
             _, self.rotMat, self.transMat = cv2.solvePnP(modelPoints, image_points, camMat, dist_coef, flags=cv2.SOLVEPNP_ITERATIVE)
             nosePoints, _ = cv2.projectPoints(np.array([(0.0, 0.0, 1000.0)]), self.rotMat, self.transMat, camMat, dist_coef)
 
+            # print("Transmat:")
+            # print(self.transMat)
+            # print("rotmat:")
+            # print(self.rotMat)
             p1 = ( int(image_points[0][0]), int(image_points[0][1]))
             p2 = ( int(nosePoints[0][0][0]), int(nosePoints[0][0][1]))
             org_p1 = (int(p1[0] / ratio), int(p1[1] / ratio))
@@ -260,9 +268,12 @@ class FaceMask:
                     mask = resize_image(mask, width=width)
                     curFrame = overlay_transparent(curFrame, mask, left_cheek_x + magic_num, upper_lip_y)
             curFrame = cv2.flip(curFrame, 1)
-            cv2.imshow('original', curFrame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                exit()
+            ret, jpeg = cv2.imencode('.jpg', curFrame)
+            return jpeg.tobytes()
+            # curFrame = cv2.flip(curFrame, 1)
+            # cv2.imshow('original', curFrame)
+            # if cv2.waitKey(1) & 0xFF == ord('q'):
+            #     exit()
 
     def main(self):
         global surgical_mask
