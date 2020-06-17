@@ -21,6 +21,20 @@ Let's set up the environment
 $ conda env create -f environment.yml
 ```
 
+- If creating the environment with environment.yml does not work, try the following
+```
+$ conda env create --name ee474_app
+$ conda install -c conda-forge opencv=3.4.2
+$ pip install dlib
+$ conda install -c anaconda flask
+```
+
+- Then, go to client folder and setup npm
+```
+$ cd client
+$ npm install
+```
+
 ### Download dlib model
 - Download dlib model and extract the file in the project directory
 ```
