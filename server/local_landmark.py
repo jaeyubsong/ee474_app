@@ -6,6 +6,7 @@ import argparse
 
 # Hyperparameter
 resize_size = 200.
+send_size = 48
 
 # global variable
 texture_id = 0
@@ -107,7 +108,9 @@ def resize_image(inputImg, width=None, height=None):
 class Cam:
     def __init__(self):
         self.capture = cv2.VideoCapture(0)
-        self.curFrame = self.capture.read()[1]
+        # self.curFrame = self.capture.read()[1]
+        self.curFrame = None
+        self.curSmallFrame = None
 
     def update_frame(self):
         self.curFrame = self.capture.read()[1]
@@ -123,6 +126,8 @@ class Detector:
         self.org_nosePoint = [] # coordinates for noses
         self.transMat = []
         self.rotMat = []
+        self.rectImg = None
+        self.rectLandmark = []
 
     def resetInternals(self):
         self.feature = []
@@ -130,6 +135,9 @@ class Detector:
         self.org_nosePoint = []
         self.transMat = []
         self.rotMat = [] 
+        self.rectImg = None
+        self.rectLandmark = []
+
 
     # Detect landmark and headpose
     def detect(self, frame):
@@ -156,17 +164,33 @@ class Detector:
             self.org_feature.append({})
             self.org_feature[i]['rect'] = [org_t, org_b, org_l ,org_r]
             self.org_feature[i]['landmark'] = []
-            
+
+            # Make rectangle as image
+            rect_ratio_x = 1.0 * send_size / (r-l)
+            rect_ratio_y = 1.0 * send_size / (b-t)
+
+            print("rect raxio x: %f, y: %f" % (rect_ratio_x, rect_ratio_y))
+            rect_dim = (send_size, send_size)
+            rect_img = resized[t:b, l:r]
+            rect_img = cv2.resize(rect_img, rect_dim, interpolation = cv2.INTER_AREA)
+            # self.rectImg = rect_img
+
+
             # Detect landmark
             shape = predictor(resized, rect)
             for j in range(68):
                 x, y = shape.part(j).x, shape.part(j).y
                 org_x, org_y = int(x/ratio), int(y/ratio)
+                # print("x-l is %d" % (x-l))
+                rect_x, rect_y = int((x - l) * rect_ratio_x), int(1.0 * (y - t) * rect_ratio_y)
+                cv2.circle(rect_img, (rect_x, rect_y), 1, (0, 0, 255), -1)
+
                 self.feature[i]['landmark'].append([x, y])
                 self.org_feature[i]['landmark'].append([org_x, org_y])
+                self.rectLandmark.append([rect_x, rect_y])
                 if MODE == DEBUGMODE:
                     cv2.circle(resized, (x, y), 1, (0, 0, 255), -1)
-            
+            self.rectImg = rect_img
             # Detect headpose
             nose_tip = self.feature[i]['landmark'][33]
             chin = self.feature[i]['landmark'][8]
@@ -221,6 +245,12 @@ class Detector:
     
     def get_org_nosePoint(self):
         return self.org_nosePoint
+    
+    def get_rectImg(self):
+        return self.rectImg
+    
+    def get_rectLandmark(self):
+        return self.rectLandmark
 
 
 class FaceMask:
