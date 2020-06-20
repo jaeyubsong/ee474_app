@@ -39,6 +39,7 @@ function App() {
     <div className="App">
       <div>Streaming is done below</div>
       <img src={'/stream'} />
+      <img src={'/recorder'} />
       <button onClick={() => {
         console.log("Call showMaskRequest");
         if (showMask == false) {

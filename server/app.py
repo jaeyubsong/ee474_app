@@ -1,12 +1,14 @@
 from flask import Flask, Response, render_template, request, jsonify
 import logging
 from local_landmark import FaceMask
+from screenshot import ScreenCapture
 import threading
 
 lock = threading.Lock()
 app = Flask(__name__)
 
 faceMask = FaceMask()
+capture = ScreenCapture()
 
 # Global variabble
 SURGICAL_MASK = 1
@@ -28,11 +30,24 @@ def get_frame(maskType=CUR_MASK, showMask=SHOWMASK):
             yield (b'--frame\r\n'
                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
 
+def get_screen():
+    global lock
+    global capture
+    while "Screen Capturing":
+        with lock:
+            capture.update_frame()
+            frame = capture.show_frame()
+            yield (b'--frame\r\n'
+                  b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
 
 @app.route('/stream', methods=['GET'])
 def stream():
     return Response(get_frame(maskType=CUR_MASK),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/recorder', methods=['GET'])
+def recorder():
+    return Response(get_screen(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 @app.route('/showMask', methods=['POST'])
@@ -61,4 +76,4 @@ def showMask():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5007)
+    app.run(host='0.0.0.0', port=5007, threaded=True)
