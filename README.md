@@ -11,9 +11,9 @@ Let's set up the environment
 
 ### Prerequisites
 
-- anaconda
-- npm
-- nodejs
+- anaconda (version 4.8.3 is used)
+- npm (version 6.2.0 is used)
+- nodejs (version 10.8.0 is used)
 
 ### Setting up the environment
 - Setup anaconda environment
@@ -23,9 +23,9 @@ $ conda env create -f environment.yml
 
 - If creating the environment with environment.yml does not work, try the following
 ```
-$ conda env create --name ee474_app
-$ conda install -c conda-forge opencv=3.4.2
-$ pip install dlib
+$ conda create --name ee474_app python=3.7
+$ conda install -c conda-forge opencv=4.2.0=py37_7
+$ conda install -c conda-forge dlib
 $ conda install -c anaconda flask
 ```
 

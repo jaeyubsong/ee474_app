@@ -2,6 +2,7 @@ import sys
 import cv2
 import numpy as np
 import dlib
+from random import randint
 import argparse
 
 # Hyperparameter
@@ -38,16 +39,21 @@ camMat = np.array(
 
 dist_coef = np.zeros((4,1)) # Assuming no lens distortion
 
+# If debug is true, opencv.show activates
+DEBUG = False
 
-DEBUGMODE = 1
-MASKMODE = 2
+LANDMARK_MODE = 1
+MASK_MODE = 2
 
 SURGICAL_MASK = 1
+HAPPY_EMOJI = 2
 
 # debug parameters
-MODE = MASKMODE
+MODE = MASK_MODE
+
 
 surgical_mask = cv2.imread('./res/mask/surgical_mask.png', cv2.IMREAD_UNCHANGED)
+happy_emoji = cv2.imread('./res/emoji/e3.png', cv2.IMREAD_UNCHANGED)
 rows, cols, channels = surgical_mask.shape
 
 
@@ -102,6 +108,44 @@ def resize_image(inputImg, width=None, height=None):
         dim = (width, height)
     resized = cv2.resize(inputImg, dim, interpolation=cv2.INTER_AREA)
     return resized
+
+
+def put_mask(inputImg, landmark, maskType):
+    global surgical_mask
+    if maskType == SURGICAL_MASK:
+        magic_num = 10
+        left_cheek_x = landmark[2][0] - magic_num
+        right_cheek_x = landmark[14][0] + magic_num
+        upper_lip_y = landmark[27][1]
+        width = right_cheek_x - left_cheek_x
+        mask = surgical_mask.copy()
+        mask = resize_image(mask, width=width)
+    newImg = overlay_transparent(inputImg, mask, left_cheek_x + magic_num, upper_lip_y)
+    return newImg
+
+
+def put_bg_effect(inputImg, landmark, bgType):
+    global happy_emoji
+    if bgType == HAPPY_EMOJI:
+        emoji_size = 50
+        magic_num = 10
+        left_cheek_x = landmark[2][0] - magic_num
+        right_cheek_x = landmark[14][0] + magic_num
+        upper_lip_y = landmark[27][1]
+        width = right_cheek_x - left_cheek_x
+        mask = happy_emoji.copy()
+        mask = resize_image(mask, width=emoji_size)
+        print(inputImg.shape)
+        imgWidth = inputImg.shape[1]
+        imgHeight = inputImg.shape[0]
+        howMany = randint(5, 20)
+        for i in range(howMany):
+            x_pos = randint(emoji_size, imgWidth-emoji_size)
+            y_pos = randint(emoji_size, imgHeight-emoji_size)
+            newImg = overlay_transparent(inputImg, mask, x_pos, y_pos)
+    else:
+        newImg = inputImgq
+    return newImg
 
 
 
@@ -188,7 +232,7 @@ class Detector:
                 self.feature[i]['landmark'].append([x, y])
                 self.org_feature[i]['landmark'].append([org_x, org_y])
                 self.rectLandmark.append([rect_x, rect_y])
-                if MODE == DEBUGMODE:
+                if MODE == LANDMARK_MODE:
                     cv2.circle(resized, (x, y), 1, (0, 0, 255), -1)
             self.rectImg = rect_img
             # Detect headpose
@@ -226,11 +270,11 @@ class Detector:
             self.org_nosePoint[-1].append(org_p1)
             self.org_nosePoint[-1].append(org_p2)
 
-            if MODE == DEBUGMODE:
+            if MODE == LANDMARK_MODE:
                 cv2.line(resized, p1, p2, (255,0,0), 2)
 
 
-            if MODE == DEBUGMODE and len(self.feature) > 0:
+            if DEBUG and len(self.feature) > 0:
                 cv2.rectangle(resized, (l, t), (r, b), (0, 255, 0), 2)
                 resized = cv2.flip(resized, 1)
                 cv2.imshow('resized', resized)
@@ -262,68 +306,76 @@ class FaceMask:
         self.cam.update_frame()
         self.detector.detect(self.cam.get_curFrame())
     
-    def show_frame(self, maskType=None, showMask=False):
+    def show_frame(self, maskType=None, showMask=True, showBgEffect=True, effectType=HAPPY_EMOJI):
         global surgical_mask
+        global happy_emoji
         curFrame = self.cam.get_curFrame()
-        if MODE == DEBUGMODE:
-            landmarks = self.detector.get_org_feature()
-            # print(landmarks)
-            for i in range(len(landmarks)):
-                for j in range(68):
-                    cv2.circle(curFrame, (landmarks[i]['landmark'][j][0], landmarks[i]['landmark'][j][1]), 1, (0, 0, 255), -1)
-                t = landmarks[i]['rect'][0]
-                b = landmarks[i]['rect'][1]
-                l = landmarks[i]['rect'][2]
-                r = landmarks[i]['rect'][3]
-                cv2.rectangle(curFrame, (l, t), (r, b), (0, 255, 0), 2)
-                point = self.detector.get_org_nosePoint()
-                cv2.line(curFrame, point[i][0], point[i][1], (255,0,0), 2)
+        landmarks = self.detector.get_org_feature()
 
-            curFrame = cv2.flip(curFrame, 1)
-            cv2.imshow('original', curFrame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                exit()
-        elif MODE == MASKMODE and showMask == True:
-            landmarks = self.detector.get_org_feature()
-            # print(landmarks)
-            for i in range(len(landmarks)):
-                landmark = landmarks[i]['landmark']
+        for i in range(len(landmarks)):
+            landmark = landmarks[i]['landmark']
+            if MODE == LANDMARK_MODE:
+                # print(landmarks)
+                for i in range(len(landmarks)):
+                    for j in range(68):
+                        cv2.circle(curFrame, (landmarks[i]['landmark'][j][0], landmarks[i]['landmark'][j][1]), 1, (0, 0, 255), -1)
+                    t = landmarks[i]['rect'][0]
+                    b = landmarks[i]['rect'][1]
+                    l = landmarks[i]['rect'][2]
+                    r = landmarks[i]['rect'][3]
+                    cv2.rectangle(curFrame, (l, t), (r, b), (0, 255, 0), 2)
+                    point = self.detector.get_org_nosePoint()
+                    cv2.line(curFrame, point[i][0], point[i][1], (255,0,0), 2)
+            if MODE == MASK_MODE and showMask == True:
                 if maskType == SURGICAL_MASK:
+                    curFrame = put_mask(inputImg=curFrame, landmark=landmark, maskType=SURGICAL_MASK)
+                elif maskType == HAPPY_EMOJI:
                     magic_num = 10
                     left_cheek_x = landmark[2][0] - magic_num
                     right_cheek_x = landmark[14][0] + magic_num
                     upper_lip_y = landmark[27][1]
                     width = right_cheek_x - left_cheek_x
-                    mask = surgical_mask.copy()
+                    mask = happy_emoji.copy()
                     mask = resize_image(mask, width=width)
                     curFrame = overlay_transparent(curFrame, mask, left_cheek_x + magic_num, upper_lip_y)
-            curFrame = cv2.flip(curFrame, 1)
-            ret, jpeg = cv2.imencode('.jpg', curFrame)
-            return jpeg.tobytes()
-            # curFrame = cv2.flip(curFrame, 1)
-            # cv2.imshow('original', curFrame)
-            # if cv2.waitKey(1) & 0xFF == ord('q'):
-            #     exit()
-        elif showMask == False:
-            curFrame = cv2.flip(curFrame, 1)
-            ret, jpeg = cv2.imencode('.jpg', curFrame)
-            return jpeg.tobytes()
+            if showBgEffect == True:
+                if effectType == HAPPY_EMOJI:
+                    curFrame = put_bg_effect(inputImg=curFrame, landmark=landmark, bgType=HAPPY_EMOJI)
+
+            
+        # elif MODE == MASK_MODE and showMask == False:
+        #     curFrame = cv2.flip(curFrame, 1)
+        #     ret, jpeg = cv2.imencode('.jpg', curFrame)
+        
+
+        # if showBgEffect == True:
+        #     if effectType == HAPPY_EMOJI:
+        #         curFrame = put_emoji_effect(inputImg=curFrame, landmark=landmark)
+
+
+        curFrame = cv2.flip(curFrame, 1)
+        ret, jpeg = cv2.imencode('.jpg', curFrame)
+        if DEBUG:
+ㅂ            cv2.imshow('original', curFrame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                exit()
+        return jpeg.tobytes()
 
     def main(self):
-        global surgical_mask
         while True:
             self.update_frame()
-            self.show_frame(maskType=SURGICAL_MASK)
+            self.show_frame(maskType=SURGICAL_MASK, showMask=True)
 
  
 if __name__=='__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument("-m", "--mode", required=False, type=int, default=2, help="Debug mode: 1, Mask mode: 2")
+    ap.add_argument("-m", "--mode", required=False, type=int, default=2, help="Landmark mode: 1, Mask mode: 2")
     args = vars(ap.parse_args())
-    if args['mode'] == DEBUGMODE:
-        print("Debug mode")
-    elif args['mode'] == MASKMODE:
+    if args['mode'] == LANDMARK_MODE:
+        print("Landmark mode")
+    elif args['mode'] == MASK_MODE:
         print("Mask mode")
+    DEBUG = True
     MODE = args['mode']
     faceMask = FaceMask()
     faceMask.main()

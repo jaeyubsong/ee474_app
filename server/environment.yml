@@ -1,46 +1,73 @@
 name: ee474_app
 channels:
-  - conda-forge
   - anaconda
+  - conda-forge
   - defaults
 dependencies:
+  - bzip2=1.0.8=h0b31af3_2
   - ca-certificates=2020.1.1=0
+  - cairo=1.16.0=ha8983da_1004
   - certifi=2020.4.5.2=py37_0
   - click=7.1.2=py_0
+  - dlib=19.20=py37h801b7fd_1
+  - ffmpeg=4.2.3=hd0c0d6a_0
   - flask=1.1.2=py_0
-  - hdf5=1.8.20=hac2f561_1
-  - icc_rt=2019.0.0=h0cc432a_1
-  - intel-openmp=2020.0=166
+  - fontconfig=2.13.1=h79c0d67_1002
+  - freetype=2.10.2=h8da9a1a_0
+  - gettext=0.19.8.1=h46ab8bc_1002
+  - giflib=5.2.1=h0b31af3_2
+  - glib=2.64.3=h577aef8_0
+  - gmp=6.2.0=h4a8c4bd_2
+  - gnutls=3.6.13=hc269f14_0
+  - graphite2=1.3.13=h12caacf_1001
+  - harfbuzz=2.4.0=h1050040_5
+  - hdf5=1.10.6=nompi_h3e39495_100
+  - icu=67.1=h4a8c4bd_0
   - itsdangerous=1.1.0=py37_0
+  - jasper=1.900.1=h636a363_1006
   - jinja2=2.11.2=py_0
-  - jpeg=9d=he774522_0
-  - libblas=3.8.0=15_mkl
-  - libcblas=3.8.0=15_mkl
-  - liblapack=3.8.0=15_mkl
-  - libopencv=3.4.2=h20b85fd_0
-  - libpng=1.6.37=hfe6a214_1
-  - libtiff=4.1.0=h885aae3_6
-  - lz4-c=1.9.2=h62dcd97_1
-  - markupsafe=1.1.1=py37he774522_0
-  - mkl=2020.0=166
-  - numpy=1.18.5=py37hae9e721_0
-  - opencv=3.4.2=py37h40b0b35_0
-  - openssl=1.1.1g=he774522_0
-  - pip=20.1.1=py_1
-  - py-opencv=3.4.2=py37hc319ecb_0
-  - python=3.7.6=cpython_h60c2a47_6
+  - jpeg=9d=h0b31af3_0
+  - lame=3.100=h1de35cc_1001
+  - libblas=3.8.0=16_openblas
+  - libcblas=3.8.0=16_openblas
+  - libcxx=10.0.0=1
+  - libedit=3.1.20191231=haf1e3a3_0
+  - libffi=3.2.1=h4a8c4bd_1007
+  - libgfortran=4.0.0=2
+  - libiconv=1.15=h0b31af3_1006
+  - liblapack=3.8.0=16_openblas
+  - liblapacke=3.8.0=16_openblas
+  - libopenblas=0.3.9=h3d69b6c_0
+  - libopencv=4.2.0=py37_7
+  - libpng=1.6.37=hbbe82c9_1
+  - libtiff=4.1.0=h2ae36a8_6
+  - libwebp=1.1.0=hd3bf737_4
+  - libwebp-base=1.1.0=h0b31af3_3
+  - libxml2=2.9.10=hc06c4ae_1
+  - llvm-openmp=10.0.0=h28b9765_0
+  - lz4-c=1.9.2=h4a8c4bd_1
+  - markupsafe=1.1.1=py37h1de35cc_0
+  - ncurses=6.2=h0a44026_1
+  - nettle=3.4.1=h3efe00b_1002
+  - numpy=1.18.5=py37h7687784_0
+  - opencv=4.2.0=py37_7
+  - openh264=2.1.1=hd174df1_0
+  - openssl=1.1.1g=h1de35cc_0
+  - pcre=8.44=h4a8c4bd_0
+  - pip=20.1.1=py37_1
+  - pixman=0.38.0=h01d97ff_1003
+  - py-opencv=4.2.0=py37h43977f1_7
+  - python=3.7.6=cpython_h1fd5dd1_6
   - python_abi=3.7=1_cp37m
-  - setuptools=47.3.1=py37hc8dfbb8_0
-  - sqlite=3.30.1=hfa6e2cd_0
-  - vc=14.1=h869be7e_1
-  - vs2015_runtime=14.16.27012=h30e32a0_2
+  - readline=8.0=h1de35cc_0
+  - setuptools=47.3.0=py37_0
+  - sqlite=3.32.2=hffcf06c_0
+  - tk=8.6.10=hb0a8c7a_0
   - werkzeug=1.0.1=py_0
-  - wheel=0.34.2=py_1
-  - wincertstore=0.2=py37_1003
-  - xz=5.2.5=h2fa13f4_0
-  - zlib=1.2.11=h2fa13f4_1006
-  - zstd=1.4.4=h9f78265_3
-  - pip:
-    - dlib==19.20.0
-prefix: C:\Users\Jaeyub\anaconda3\envs\ee474_app
+  - wheel=0.34.2=py37_0
+  - x264=1!152.20180806=h1de35cc_0
+  - xz=5.2.5=h1de35cc_0
+  - zlib=1.2.11=h1de35cc_3
+  - zstd=1.4.4=h4b3e974_3
+prefix: /Users/jaeyubsong/opt/anaconda3/envs/ee474_app
 
