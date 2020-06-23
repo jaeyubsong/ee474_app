@@ -4,6 +4,7 @@ import numpy as np
 import dlib
 from random import randint
 import argparse
+from copy import copy, deepcopy
 
 # Hyperparameter
 resize_size = 200.
@@ -11,6 +12,10 @@ send_size = 48
 
 # global variable
 texture_id = 0
+input_vid_path = None
+
+global_rect = []
+
 
 # Initiate dlib
 detector = dlib.get_frontal_face_detector()
@@ -48,13 +53,21 @@ MASK_MODE = 2
 SURGICAL_MASK = 1
 HAPPY_EMOJI = 2
 
+CAM = 1
+VIDEO = 2
+
 # debug parameters
 MODE = MASK_MODE
+INPUT = CAM
 
 
 surgical_mask = cv2.imread('./res/mask/surgical_mask.png', cv2.IMREAD_UNCHANGED)
 happy_emoji = cv2.imread('./res/emoji/e3.png', cv2.IMREAD_UNCHANGED)
 rows, cols, channels = surgical_mask.shape
+
+fourcc = cv2.VideoWriter_fourcc(*'mp4V')
+out = None
+# out = cv2.VideoWriter('output.mp4', fourcc, 20.0, (640,480))
 
 
 # function from https://stackoverflow.com/a/54058766
@@ -151,13 +164,21 @@ def put_bg_effect(inputImg, landmark, bgType):
 
 class Cam:
     def __init__(self):
-        self.capture = cv2.VideoCapture(0)
+        if INPUT == CAM:
+            self.capture = cv2.VideoCapture(0)
+        elif INPUT == VIDEO:
+            self.capture = cv2.VideoCapture(input_vid_path)
         # self.curFrame = self.capture.read()[1]
         self.curFrame = None
         self.curSmallFrame = None
 
     def update_frame(self):
-        self.curFrame = self.capture.read()[1]
+        # if self.curFrame:
+            self.curFrame = self.capture.read()[1]
+
+        # else:
+        #     out.release()
+        #     cv2.destroyAllWindows()
     
     def get_curFrame(self):
         return self.curFrame
@@ -185,12 +206,16 @@ class Detector:
 
     # Detect landmark and headpose
     def detect(self, frame):
-        self.resetInternals()
+        # self.resetInternals()
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         ratio = resize_size / gray.shape[1]
         dim = (int(resize_size), int(gray.shape[0] * ratio))
         resized = cv2.resize(gray, dim, interpolation = cv2.INTER_AREA)
         rects = detector(resized, 1)
+        if len(rects) == 0:
+            return
+        else:
+            self.resetInternals()
         for i, rect in enumerate(rects):
             t = rect.top()
             b = rect.bottom()
@@ -304,7 +329,11 @@ class FaceMask:
 
     def update_frame(self):
         self.cam.update_frame()
-        self.detector.detect(self.cam.get_curFrame())
+        cur_frame = self.cam.get_curFrame()
+        if cur_frame is None:
+            out.release()
+            exit()
+        self.detector.detect(cur_frame)
     
     def show_frame(self, maskType=None, showMask=True, showBgEffect=True, effectType=HAPPY_EMOJI):
         global surgical_mask
@@ -356,20 +385,25 @@ class FaceMask:
         curFrame = cv2.flip(curFrame, 1)
         ret, jpeg = cv2.imencode('.jpg', curFrame)
         if DEBUG:
-ㅂ            cv2.imshow('original', curFrame)
+            cv2.imshow('original', curFrame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 exit()
+        if out is not None:
+            out.write(curFrame)
         return jpeg.tobytes()
 
     def main(self):
         while True:
             self.update_frame()
-            self.show_frame(maskType=SURGICAL_MASK, showMask=True)
+            self.show_frame(maskType=SURGICAL_MASK, showMask=False, showBgEffect=True)
 
  
 if __name__=='__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument("-m", "--mode", required=False, type=int, default=2, help="Landmark mode: 1, Mask mode: 2")
+    ap.add_argument("-i", "--input", required=False, type=str, default=None, help="input video")
+    ap.add_argument("-o", "--output", required=False, type=str, default=None, help="output video")
+
     args = vars(ap.parse_args())
     if args['mode'] == LANDMARK_MODE:
         print("Landmark mode")
@@ -377,5 +411,11 @@ if __name__=='__main__':
         print("Mask mode")
     DEBUG = True
     MODE = args['mode']
+    if args['input'] is not None:
+        print("Arg is not none")
+        input_vid_path = args['input']
+        INPUT = VIDEO
+    if args['output'] is not None:
+        out = cv2.VideoWriter('output.mp4', fourcc, 20.0, (640,480))
     faceMask = FaceMask()
     faceMask.main()
