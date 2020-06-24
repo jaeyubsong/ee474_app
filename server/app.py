@@ -3,6 +3,7 @@ import logging
 from local_landmark import FaceMask
 import threading
 from config import *
+from util import checkIfInt
 import json
 import cv2
 import numpy as numpy
@@ -17,10 +18,9 @@ app = Flask(__name__)
 faceMask = FaceMask()
 
 # Global variabble
-SURGICAL_MASK = 1
 SHOWMASK = True
 FUNMODE = True
-CUR_MASK = SURGICAL_MASK
+CUR_MASK = SURGICALMASK
 curFrame = None
 rectImg = None
 curEmotion = 0
@@ -33,7 +33,7 @@ gpu_emotion_api_url = 'http://localhost:7007/emotion'
 def index():
     return render_template('index.html')
 
-def get_frame(maskType=CUR_MASK):
+def get_frame():
     global lock
     global faceMask 
     global curFrame
@@ -45,7 +45,8 @@ def get_frame(maskType=CUR_MASK):
         with lock:
             #get camera frame
             faceMask.update_frame()
-            curFrame = faceMask.show_frame(maskType, showMask=SHOWMASK, funMode=FUNMODE)
+            curFrame = faceMask.show_frame(maskType=CUR_MASK, showMask=SHOWMASK, funMode=FUNMODE)
+            # print("show_frame masktype is %d" % CUR_MASK)
             if showMask:
                 rectImg = faceMask.detector.get_rectImg()
                 landmark = faceMask.detector.get_rectLandmark()
@@ -92,7 +93,7 @@ def get_frame(maskType=CUR_MASK):
 
 @app.route('/stream', methods=['GET'])
 def stream():
-    return Response(get_frame(maskType=CUR_MASK),
+    return Response(get_frame(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
@@ -123,36 +124,45 @@ def showMask():
 
 @app.route('/userButton', methods=['POST'])
 def handleUserButton():
-    global SHOWMASK
-    global FUNMODE
+    global SHOWMASK, FUNMODE, CUR_MASK
     received = request.form.to_dict()
     if 'showMask' in received:
-      if received['showMask'] == 'false':
-          print("Inside false of showmask")
-          SHOWMASK = False
-      elif received['showMask'] == 'true':
-          print("inside true of showmask")
-          SHOWMASK = True
-      else:
-        print("Inappropriate post request")
-        print(received)
-        exit()  
+        if received['showMask'] == 'false':
+            print("Inside false of showmask")
+            SHOWMASK = False
+        elif received['showMask'] == 'true':
+            print("inside true of showmask")
+            SHOWMASK = True
+        else:
+            print("Inappropriate post request")
+            print(received)
+            exit()  
 
     if 'funMode' in received:
-      if received['funMode'] == 'false':
-          print("Inside false of funmode")
-          FUNMODE = False
-      elif received['funMode'] == 'true':
-          print("inside true of funmode")
-          FUNMODE = True
-      else:
-        print("Inappropriate post request")
-        print(received)
-        exit()  
+        if received['funMode'] == 'false':
+            print("Inside false of funmode")
+            FUNMODE = False
+        elif received['funMode'] == 'true':
+            print("inside true of funmode")
+            FUNMODE = True
+        else:
+            print("Inappropriate post request")
+            print(received)
+            exit()
+
+    if 'maskType' in received:
+        if not checkIfInt(received['maskType']):
+            print("Inappropriate data value")
+            print(received)
+            exit()
+        else:
+            mask_num = int(received['maskType'])
+            CUR_MASK = mask_num
   
     print(received)
     print("Showmask is %r" % SHOWMASK)
     print("Funmode is %r" % FUNMODE)
+    print("Curmask is %r" % CUR_MASK)
     response = jsonify({'result': 'success', 'maskStatus': received})
     response.headers.add('Access-Control-Allow-Origin', '*')
     app.logger.info(response)

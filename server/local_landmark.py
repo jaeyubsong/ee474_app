@@ -5,6 +5,7 @@ import dlib
 from random import randint
 import argparse
 from copy import copy, deepcopy
+from config import *
 
 # Hyperparameter
 resize_size = 200.
@@ -50,8 +51,8 @@ DEBUG = False
 LANDMARK_MODE = 1
 MASK_MODE = 2
 
-SURGICAL_MASK = 1
-HAPPY_EMOJI = 2
+
+HAPPY_EMOJI = 11
 
 CAM = 1
 VIDEO = 2
@@ -61,9 +62,17 @@ MODE = MASK_MODE
 INPUT = CAM
 
 
-surgical_mask = cv2.imread('./res/mask/surgical_mask.png', cv2.IMREAD_UNCHANGED)
+blindFold = cv2.imread('./res/mask/blindFold.png', cv2.IMREAD_UNCHANGED)
+bunny = cv2.imread('./res/mask/bunny.png', cv2.IMREAD_UNCHANGED)
+darthVadar = cv2.imread('./res/mask/darthVadar.png', cv2.IMREAD_UNCHANGED)
+grouchoGlasses = cv2.imread('./res/mask/grouchoGlasses.png', cv2.IMREAD_UNCHANGED)
+guyFawkes = cv2.imread('./res/mask/guyFawkes.png', cv2.IMREAD_UNCHANGED)
+halloween = cv2.imread('./res/mask/halloween.png', cv2.IMREAD_UNCHANGED)
+surgicalMask = cv2.imread('./res/mask/surgicalMask.png', cv2.IMREAD_UNCHANGED)
+
+
 happy_emoji = cv2.imread('./res/emoji/e3.png', cv2.IMREAD_UNCHANGED)
-rows, cols, channels = surgical_mask.shape
+rows, cols, channels = surgicalMask.shape
 
 fourcc = cv2.VideoWriter_fourcc(*'mp4V')
 out = None
@@ -124,15 +133,64 @@ def resize_image(inputImg, width=None, height=None):
 
 
 def put_mask(inputImg, landmark, maskType):
-    global surgical_mask
-    if maskType == SURGICAL_MASK:
+    global blindFold, bunny, darthVadar, grouchoGlasses, guyFawkes, halloween, surgicalMask
+    if maskType == BLINDFOLD:
         magic_num = 10
         left_cheek_x = landmark[2][0] - magic_num
         right_cheek_x = landmark[14][0] + magic_num
         upper_lip_y = landmark[27][1]
         width = right_cheek_x - left_cheek_x
-        mask = surgical_mask.copy()
+        mask = blindFold.copy()
         mask = resize_image(mask, width=width)
+    elif maskType == BUNNY:
+        magic_num = 10
+        left_cheek_x = landmark[2][0] - magic_num
+        right_cheek_x = landmark[14][0] + magic_num
+        upper_lip_y = landmark[27][1]
+        width = right_cheek_x - left_cheek_x
+        mask = bunny.copy()
+        mask = resize_image(mask, width=width)
+    elif maskType == DARTHVADAR:
+        magic_num = 10
+        left_cheek_x = landmark[2][0] - magic_num
+        right_cheek_x = landmark[14][0] + magic_num
+        upper_lip_y = landmark[27][1]
+        width = right_cheek_x - left_cheek_x
+        mask = darthVadar.copy()
+        mask = resize_image(mask, width=width)
+    elif maskType == GROUCHOGLASSES:
+        magic_num = 10
+        left_cheek_x = landmark[2][0] - magic_num
+        right_cheek_x = landmark[14][0] + magic_num
+        upper_lip_y = landmark[27][1]
+        width = right_cheek_x - left_cheek_x
+        mask = grouchoGlasses.copy()
+        mask = resize_image(mask, width=width)
+    elif maskType == GUYFAWKES:
+        magic_num = 10
+        left_cheek_x = landmark[2][0] - magic_num
+        right_cheek_x = landmark[14][0] + magic_num
+        upper_lip_y = landmark[27][1]
+        width = right_cheek_x - left_cheek_x
+        mask = guyFawkes.copy()
+        mask = resize_image(mask, width=width)
+    elif maskType == HALLOWEEN:
+        magic_num = 10
+        left_cheek_x = landmark[2][0] - magic_num
+        right_cheek_x = landmark[14][0] + magic_num
+        upper_lip_y = landmark[27][1]
+        width = right_cheek_x - left_cheek_x
+        mask = halloween.copy()
+        mask = resize_image(mask, width=width)
+    elif maskType == SURGICALMASK:
+        magic_num = 10
+        left_cheek_x = landmark[2][0] - magic_num
+        right_cheek_x = landmark[14][0] + magic_num
+        upper_lip_y = landmark[27][1]
+        width = right_cheek_x - left_cheek_x
+        mask = surgicalMask.copy()
+        mask = resize_image(mask, width=width)
+
     newImg = overlay_transparent(inputImg, mask, left_cheek_x + magic_num, upper_lip_y)
     return newImg
 
@@ -336,7 +394,7 @@ class FaceMask:
         self.detector.detect(cur_frame)
     
     def show_frame(self, maskType=None, showMask=True, funMode=True, effectType=HAPPY_EMOJI):
-        global surgical_mask
+        global surgicalMask
         global happy_emoji
         curFrame = self.cam.get_curFrame()
         landmarks = self.detector.get_org_feature()
@@ -356,17 +414,8 @@ class FaceMask:
                     point = self.detector.get_org_nosePoint()
                     cv2.line(curFrame, point[i][0], point[i][1], (255,0,0), 2)
             if MODE == MASK_MODE and showMask == True:
-                if maskType == SURGICAL_MASK:
-                    curFrame = put_mask(inputImg=curFrame, landmark=landmark, maskType=SURGICAL_MASK)
-                elif maskType == HAPPY_EMOJI:
-                    magic_num = 10
-                    left_cheek_x = landmark[2][0] - magic_num
-                    right_cheek_x = landmark[14][0] + magic_num
-                    upper_lip_y = landmark[27][1]
-                    width = right_cheek_x - left_cheek_x
-                    mask = happy_emoji.copy()
-                    mask = resize_image(mask, width=width)
-                    curFrame = overlay_transparent(curFrame, mask, left_cheek_x + magic_num, upper_lip_y)
+                curFrame = put_mask(inputImg=curFrame, landmark=landmark, maskType=maskType)
+
             if funMode == True:
                 if effectType == HAPPY_EMOJI:
                     curFrame = put_bg_effect(inputImg=curFrame, landmark=landmark, bgType=HAPPY_EMOJI)
@@ -395,7 +444,7 @@ class FaceMask:
     def main(self):
         while True:
             self.update_frame()
-            self.show_frame(maskType=SURGICAL_MASK, showMask=False, funMode=True)
+            self.show_frame(maskType=SURGICALMASK, showMask=False, funMode=True)
 
  
 if __name__=='__main__':
