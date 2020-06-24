@@ -23,7 +23,7 @@ FUNMODE = True
 CUR_MASK = SURGICAL_MASK
 curFrame = None
 rectImg = None
-curEmotion = None
+curEmotion = 0
 landmark = None
 failTime = 0
 lastPostSuccess = True
@@ -39,6 +39,7 @@ def get_frame(maskType=CUR_MASK):
     global curFrame
     global failTime
     global lastPostSuccess
+    global curEmotion
     i = 0
     while True:
         with lock:
@@ -58,7 +59,10 @@ def get_frame(maskType=CUR_MASK):
                         try:
                             response = requests.post(gpu_emotion_api_url, files=img_file)
                             print(response.text)
+                            json_response = json.loads(response.text)
+                            print(json_response)
                             lastPostSuccess = True
+                            curEmotion = json_response["emotion"]
                         except requests.exceptions.HTTPError as errh:
                             print ("Http Error:",errh)
                             failTime = time.perf_counter()
@@ -154,6 +158,14 @@ def handleUserButton():
     app.logger.info(response)
     return response
 
+
+@app.route('/myEmotion', methods=['POST'])
+def getMyEmotion():
+    # global curEmotion
+    response = jsonify({'result': 'success', 'myEmotion': curEmotion})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    app.logger.info(response)
+    return response
 
 
 

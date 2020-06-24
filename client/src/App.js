@@ -6,6 +6,16 @@ import { Switch } from './components/Switch/Switch'
 import { Flex } from './components/Flex/Flex'
 axios.defaults.headers.post['Content-Type'] ='application/x-www-form-urlencoded';
 
+const emotion = ["sadness", "fear", "neutral", "surprise", "disgust", "happiness", "anger"]
+function numToEmotion (num) {
+  if (num == 0) {
+    return "None";
+  }
+  else {
+    return emotion[num-1];
+  }
+}
+
 
 const userButtonRequest = async (showMask, funMode) => {
   const data = {'showMask': showMask, 'funMode': funMode};
@@ -26,16 +36,55 @@ const userButtonRequest = async (showMask, funMode) => {
   console.log(result);
 }
 
+
+const getMyEmotionRequest = async () => {
+  const result = await axios({
+    method: 'post',
+    url: '/myEmotion',
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      'content-type': 'application/x-www-form-urlencoded',
+      "crossorigin": true,
+      'Access-Control-Allow-Methods': 'GET, PUT, POST, DELETE, OPTIONS',
+    },
+    // data: qs.stringify(data)
+  });
+  console.log("Data received:");
+  console.log(result);
+  console.log(result.data.myEmotion);
+  return result.data.myEmotion;
+}
+
+
+// emotion = [SADNESS, FEAR, NEUTRAL, SURPRISE, DISGUST, HAPPINESS, ANGER]
+
+
 function App() {
   const [showMask, setShowMask] = useState(false);
   const [funMode, setFunMode] = useState(false);
+  const [myEmotion, setMyEmotion] = useState(0);
   const [maskType, setMaskType] = useState(0);
 
   useEffect(() => {
     // showMaskRequest(showMask);
     userButtonRequest(showMask, funMode);
+    const interval = setInterval(async () => {
+      console.log("This will reun every second!'");
+      let curEmotion = await getMyEmotionRequest();
+      setMyEmotion(curEmotion);
+    }, 100);
+    return () => clearInterval(interval);
   })
 
+
+  numToEmotion = (num) => {
+    if (num == 0) {
+      return "None";
+    }
+    else {
+      return emotion[num-1];
+    }
+  }
 
   return (
     <div className="App">
@@ -74,6 +123,7 @@ function App() {
 
           <h5>showMask is {showMask == true ? 'True' : 'False'}</h5>
           <h5>funMode is {funMode == true ? 'True' : 'False'}</h5>
+          <h5>myEmotion is {numToEmotion(myEmotion)}</h5>
 
       </div>
     </div>
