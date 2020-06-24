@@ -83,7 +83,7 @@ function App() {
       console.log("This will reun every second!'");
       let curEmotion = await getMyEmotionRequest();
       setMyEmotion(curEmotion);
-    }, 100000);
+    }, 100);
     return () => clearInterval(interval);
   })
 

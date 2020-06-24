@@ -6,6 +6,8 @@ from random import randint
 import argparse
 from copy import copy, deepcopy
 from config import *
+from face_alignment import get_angle, rotate_opencv
+
 
 # Hyperparameter
 resize_size = 200.
@@ -115,6 +117,10 @@ def overlay_transparent(background, overlay, x, y):
     return background
 
 
+def clip(input_val, max_val):
+    return max(0, min(input_val, max_val))
+
+
 def resize_image(inputImg, width=None, height=None):
     org_width, org_height, _ = inputImg.shape
     if width is None and height is None:
@@ -123,75 +129,107 @@ def resize_image(inputImg, width=None, height=None):
     elif width is None:
         ratio = 1.0 * height / org_height
         width = int(ratio * org_width)
-        dim = (width, height)
-    else:
+    elif height is None:
         ratio = 1.0 * width / org_width
         height = int(ratio * org_height)
-        dim = (width, height)
+    dim = (int(width), int(height))
+    print(dim)
     resized = cv2.resize(inputImg, dim, interpolation=cv2.INTER_AREA)
     return resized
 
 
+
+
 def put_mask(inputImg, landmark, maskType):
     global blindFold, bunny, darthVadar, grouchoGlasses, guyFawkes, halloween, surgicalMask
+    print(inputImg.shape)
+    max_y, max_x, _ = inputImg.shape
+    print("MAx is")
+    print(max_x)
+    print(max_y)
     if maskType == BLINDFOLD:
-        magic_num = 10
-        left_cheek_x = landmark[2][0] - magic_num
-        right_cheek_x = landmark[14][0] + magic_num
-        upper_lip_y = landmark[27][1]
-        width = right_cheek_x - left_cheek_x
+        left_jaw = clip(landmark[0][0] - 15, max_x)
+        right_jaw = clip(landmark[16][0] + 15, max_x)
+        low_nose_y = landmark[33][1]
+        right_eyebrow_y = clip(landmark[23][1] - 15, max_y)
+        width = right_jaw - left_jaw
+        height = (low_nose_y - right_eyebrow_y)
         mask = blindFold.copy()
-        mask = resize_image(mask, width=width)
+        mask = resize_image(mask, width=width, height=height)
+        x_val = left_jaw
+        y_val = right_eyebrow_y
     elif maskType == BUNNY:
-        magic_num = 10
-        left_cheek_x = landmark[2][0] - magic_num
-        right_cheek_x = landmark[14][0] + magic_num
-        upper_lip_y = landmark[27][1]
-        width = right_cheek_x - left_cheek_x
+        left_jaw = clip(landmark[0][0] - 15, max_x)
+        right_jaw = clip(landmark[16][0] + 15, max_x)
+        chin_y = landmark[8][1]
+        right_eyebrow_y = clip(landmark[24][1] - 300, max_y)
+        width = right_jaw - left_jaw
+        height = (chin_y - right_eyebrow_y)
         mask = bunny.copy()
-        mask = resize_image(mask, width=width)
+        mask = resize_image(mask, width=width, height=height)
+        x_val = left_jaw
+        y_val = right_eyebrow_y
     elif maskType == DARTHVADAR:
-        magic_num = 10
-        left_cheek_x = landmark[2][0] - magic_num
-        right_cheek_x = landmark[14][0] + magic_num
-        upper_lip_y = landmark[27][1]
-        width = right_cheek_x - left_cheek_x
+        left_jaw = clip(landmark[0][0] - 160, max_x)
+        right_jaw = clip(landmark[16][0] + 160, max_x)
+        chin_y = clip(landmark[8][1] + 150, max_y)
+        right_eyebrow_y = clip(landmark[24][1] - 250, max_y)
+        width = right_jaw - left_jaw
+        height = (chin_y - right_eyebrow_y)
         mask = darthVadar.copy()
-        mask = resize_image(mask, width=width)
+        mask = resize_image(mask, width=width, height=height)
+        x_val = left_jaw
+        y_val = right_eyebrow_y
     elif maskType == GROUCHOGLASSES:
-        magic_num = 10
-        left_cheek_x = landmark[2][0] - magic_num
-        right_cheek_x = landmark[14][0] + magic_num
-        upper_lip_y = landmark[27][1]
-        width = right_cheek_x - left_cheek_x
+        left_jaw = clip(landmark[0][0], max_x)
+        right_jaw = clip(landmark[16][0], max_x)
+        outer_edge_lip_y = clip(landmark[51][1], max_y)
+        right_eyebrow_y = clip(landmark[24][1], max_y)
+        width = right_jaw - left_jaw
+        height = (outer_edge_lip_y - right_eyebrow_y)
         mask = grouchoGlasses.copy()
-        mask = resize_image(mask, width=width)
+        mask = resize_image(mask, width=width, height=height)
+        x_val = left_jaw
+        y_val = right_eyebrow_y
     elif maskType == GUYFAWKES:
-        magic_num = 10
-        left_cheek_x = landmark[2][0] - magic_num
-        right_cheek_x = landmark[14][0] + magic_num
-        upper_lip_y = landmark[27][1]
-        width = right_cheek_x - left_cheek_x
+        left_jaw = clip(landmark[0][0] - 15, max_x)
+        right_jaw = clip(landmark[16][0] + 15, max_x)
+        chin_y = landmark[8][1]
+        right_eyebrow_y = clip(landmark[24][1] - 40, max_y)
+        width = right_jaw - left_jaw
+        height = (chin_y - right_eyebrow_y)
         mask = guyFawkes.copy()
-        mask = resize_image(mask, width=width)
+        mask = resize_image(mask, width=width, height=height)
+        x_val = left_jaw
+        y_val = right_eyebrow_y
     elif maskType == HALLOWEEN:
-        magic_num = 10
-        left_cheek_x = landmark[2][0] - magic_num
-        right_cheek_x = landmark[14][0] + magic_num
-        upper_lip_y = landmark[27][1]
-        width = right_cheek_x - left_cheek_x
+        left_jaw = clip(landmark[0][0]-40, max_x)
+        right_jaw = clip(landmark[16][0]+40, max_x)
+        right_eyebrow_y = clip(landmark[24][1]-90, max_y)
+        lower_nose_y = clip(landmark[33][1]+20, max_y)
+        width = right_jaw - left_jaw
+        height = (lower_nose_y - right_eyebrow_y)
         mask = halloween.copy()
-        mask = resize_image(mask, width=width)
+        mask = resize_image(mask, width=width, height=height)
+        x_val = left_jaw
+        y_val = right_eyebrow_y
     elif maskType == SURGICALMASK:
-        magic_num = 10
-        left_cheek_x = landmark[2][0] - magic_num
-        right_cheek_x = landmark[14][0] + magic_num
-        upper_lip_y = landmark[27][1]
-        width = right_cheek_x - left_cheek_x
+        left_jaw = clip(landmark[0][0] - 15, max_x)
+        right_jaw = clip(landmark[16][0] + 15, max_x)
+        left_eye_y = clip(landmark[38][1] - 20, max_y)
+        chin_y = clip(landmark[8][1] + 70, max_y)
+        width = right_jaw - left_jaw
+        height = chin_y - left_eye_y
         mask = surgicalMask.copy()
-        mask = resize_image(mask, width=width)
+        mask = resize_image(mask, width=width, height=height)
+        x_val = left_jaw
+        y_val = left_eye_y
 
-    newImg = overlay_transparent(inputImg, mask, left_cheek_x + magic_num, upper_lip_y)
+    h, w = mask.shape[:2]
+    angle=get_angle(landmark[48], landmark[54])
+    mask = rotate_opencv(mask, (w/2, h/2), -angle)
+    # mask = resize_image(mask, width=width)
+    newImg = overlay_transparent(inputImg, mask, x_val, y_val)
     return newImg
 
 
@@ -414,6 +452,12 @@ class FaceMask:
                     point = self.detector.get_org_nosePoint()
                     cv2.line(curFrame, point[i][0], point[i][1], (255,0,0), 2)
             if MODE == MASK_MODE and showMask == True:
+                # cv2.circle(curFrame, (landmark[0][0], landmark[0][1]), 10, (0, 0, 255), -1)
+                # t = landmarks[i]['rect'][0]
+                # b = landmarks[i]['rect'][1]
+                # l = landmarks[i]['rect'][2]
+                # r = landmarks[i]['rect'][3]
+                # cv2.rectangle(curFrame, (l, t), (r, b), (0, 255, 0), 2)
                 curFrame = put_mask(inputImg=curFrame, landmark=landmark, maskType=maskType)
 
             if funMode == True:

@@ -27,6 +27,7 @@ $ conda create --name ee474_app python=3.7
 $ conda install -c conda-forge opencv=4.2.0=py37_7
 $ conda install -c conda-forge dlib
 $ conda install -c anaconda flask
+$ conda install -c anaconda pillow
 ```
 
 - Then, go to client folder and setup npm
