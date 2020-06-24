@@ -238,7 +238,7 @@ class Detector:
             rect_ratio_x = 1.0 * send_size / (r-l)
             rect_ratio_y = 1.0 * send_size / (b-t)
 
-            print("rect raxio x: %f, y: %f" % (rect_ratio_x, rect_ratio_y))
+            # print("rect raxio x: %f, y: %f" % (rect_ratio_x, rect_ratio_y))
             rect_dim = (send_size, send_size)
             rect_img = resized[t:b, l:r]
             rect_img = cv2.resize(rect_img, rect_dim, interpolation = cv2.INTER_AREA)
@@ -252,7 +252,7 @@ class Detector:
                 org_x, org_y = int(x/ratio), int(y/ratio)
                 # print("x-l is %d" % (x-l))
                 rect_x, rect_y = int((x - l) * rect_ratio_x), int(1.0 * (y - t) * rect_ratio_y)
-                cv2.circle(rect_img, (rect_x, rect_y), 1, (0, 0, 255), -1)
+                # cv2.circle(rect_img, (rect_x, rect_y), 1, (0, 0, 255), -1)
 
                 self.feature[i]['landmark'].append([x, y])
                 self.org_feature[i]['landmark'].append([org_x, org_y])
@@ -335,7 +335,7 @@ class FaceMask:
             exit()
         self.detector.detect(cur_frame)
     
-    def show_frame(self, maskType=None, showMask=True, showBgEffect=True, effectType=HAPPY_EMOJI):
+    def show_frame(self, maskType=None, showMask=True, funMode=True, effectType=HAPPY_EMOJI):
         global surgical_mask
         global happy_emoji
         curFrame = self.cam.get_curFrame()
@@ -367,7 +367,7 @@ class FaceMask:
                     mask = happy_emoji.copy()
                     mask = resize_image(mask, width=width)
                     curFrame = overlay_transparent(curFrame, mask, left_cheek_x + magic_num, upper_lip_y)
-            if showBgEffect == True:
+            if funMode == True:
                 if effectType == HAPPY_EMOJI:
                     curFrame = put_bg_effect(inputImg=curFrame, landmark=landmark, bgType=HAPPY_EMOJI)
 
@@ -377,7 +377,7 @@ class FaceMask:
         #     ret, jpeg = cv2.imencode('.jpg', curFrame)
         
 
-        # if showBgEffect == True:
+        # if funMode == True:
         #     if effectType == HAPPY_EMOJI:
         #         curFrame = put_emoji_effect(inputImg=curFrame, landmark=landmark)
 
@@ -395,7 +395,7 @@ class FaceMask:
     def main(self):
         while True:
             self.update_frame()
-            self.show_frame(maskType=SURGICAL_MASK, showMask=False, showBgEffect=True)
+            self.show_frame(maskType=SURGICAL_MASK, showMask=False, funMode=True)
 
  
 if __name__=='__main__':

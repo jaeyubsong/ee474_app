@@ -2,17 +2,18 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios'
 import qs from 'qs';
 import './App.css';
-
+import { Switch } from './components/Switch/Switch'
+import { Flex } from './components/Flex/Flex'
 axios.defaults.headers.post['Content-Type'] ='application/x-www-form-urlencoded';
 
 
-const showMaskRequest = async (showMask) => {
-  const data = {'showMask': showMask};
+const userButtonRequest = async (showMask, funMode) => {
+  const data = {'showMask': showMask, 'funMode': funMode};
   console.log("Data sent:");
   console.log(data);
   const result = await axios({
     method: 'post',
-    url: '/showMask',
+    url: '/userButton',
     headers: {
       "Access-Control-Allow-Origin": "*",
       'content-type': 'application/x-www-form-urlencoded',
@@ -25,38 +26,55 @@ const showMaskRequest = async (showMask) => {
   console.log(result);
 }
 
-
 function App() {
-  const [showMask, setshowMask] = useState(false);
+  const [showMask, setShowMask] = useState(false);
+  const [funMode, setFunMode] = useState(false);
   const [maskType, setMaskType] = useState(0);
 
   useEffect(() => {
-    showMaskRequest(showMask);
+    // showMaskRequest(showMask);
+    userButtonRequest(showMask, funMode);
   })
 
 
   return (
     <div className="App">
       <div>Streaming is done below</div>
-      <img src={'/stream'} />
-      <button onClick={() => {
-        console.log("Call showMaskRequest");
-        if (showMask == false) {
-          setshowMask(true);
-          // showMaskRequest(true)
-          console.log("showMask set to true");
-        }
-        else {
-          setshowMask(false);
-          // showMaskRequest(false)
-          console.log("showMask set to false");
-        }
-        // showMaskRequest(showMask)
-      }}>
-        On/Off
-      </button>
+
+      {/* div for user */}
+      <Flex container width="500px">
+          <Flex flex={0.6}>
+            <img src={'/stream'} width="500px"/>
+          </Flex>
+      </Flex>
+      <Flex flex={1} margin="0 0 0 5px">
+        <Flex container justifyContent="flex-start">
+            <h4 style={{marginTop: '0px'}}>ShowMask</h4>
+            <Switch
+              isOn={showMask}
+              id={"showMask"}
+              handleToggle={() => setShowMask(!showMask)}
+          ></Switch>
+        </Flex>
+
+        <Flex container justifyContent="flex-start">
+            <h4 style={{marginTop: '0px'}}>Fun Mode!!</h4>
+            <Switch
+              isOn={funMode}
+              id={"funMode"}
+              handleToggle={() => setFunMode(!funMode)}
+          ></Switch>
+        </Flex>
+
+      </Flex>
       <div>
-        showMask is {showMask == true ? 'True' : 'False'}
+        
+      </div>
+      <div>
+
+          <h5>showMask is {showMask == true ? 'True' : 'False'}</h5>
+          <h5>funMode is {funMode == true ? 'True' : 'False'}</h5>
+
       </div>
     </div>
   );
