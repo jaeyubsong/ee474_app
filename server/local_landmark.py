@@ -12,7 +12,7 @@ from face_alignment import get_angle, rotate_opencv
 
 
 # Hyperparameter
-resize_size = 100.
+resize_size = 150.
 send_size = 48
 
 # global variable
@@ -282,6 +282,9 @@ class Cam:
     def get_curFrame(self):
         return self.curFrame
 
+landmark_per_rect = 5
+cur_ld = 0
+rects = []
 
 class Detector:
     def __init__(self):
@@ -292,6 +295,7 @@ class Detector:
         self.rotMat = []
         self.rectImg = None
         self.rectLandmark = []
+        self.rects = None
 
     def resetInternals(self):
         self.feature = []
@@ -305,6 +309,8 @@ class Detector:
 
     # Detect landmark and headpose
     def detect(self, frame):
+        global rects
+        global cur_ld, landmark_per_rect
         # self.resetInternals()
         if frame is None:
             return
@@ -312,11 +318,21 @@ class Detector:
         ratio = resize_size / gray.shape[1]
         dim = (int(resize_size), int(gray.shape[0] * ratio))
         resized = cv2.resize(gray, dim, interpolation = cv2.INTER_AREA)
-        rects = detector(resized, 3)
+        # rects = detector(resized, 3)
+        if cur_ld < landmark_per_rect:
+            rects = detector(resized, 3)
+            # self.rects = copy.deepcopy(rects)
+            cur_ld = cur_ld + 1
+        else:
+            
+            cur_ld = 0
         if len(rects) == 0:
             return
         else:
             self.resetInternals()
+        print(rects)
+        # copied_rect = copy.deepcopy(rects)
+        # print(copied_rect)
         for i, rect in enumerate(rects):
             t = rect.top()
             b = rect.bottom()
@@ -346,8 +362,10 @@ class Detector:
             # self.rectImg = rect_img
 
 
-            # Detect landmark
+            # Detect landmark                
             shape = predictor(resized, rect)
+            if shape is None:
+                retnurn
             for j in range(68):
                 x, y = shape.part(j).x, shape.part(j).y
                 org_x, org_y = int(x/ratio), int(y/ratio)
@@ -426,7 +444,7 @@ class Detector:
 ii = 0
 
 class FaceMask:
-    def __init__(self, cam_fps=30, detect_fps=7):
+    def __init__(self, cam_fps=30, detect_fps=20):
         self.cam = Cam()
         self.detector = Detector()
         self.cam_fps = cam_fps
