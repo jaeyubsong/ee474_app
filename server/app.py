@@ -22,10 +22,11 @@ faceMask = FaceMask()
 faceMask.start()
 
 # Global variabble
+CAM_ON = False
 SHOWMASK = True
 FUNMODE = True
 CUR_MASK = SURGICALMASK
-cur_img_encoded = None
+cur_img_byte = None
 rectImg = None
 curEmotion = 0
 landmark = None
@@ -40,20 +41,22 @@ def index():
 def get_frame():
     global lock
     global faceMask 
-    global cur_img_encoded
+    # global cur_img_byte
+    global CAM_ON
     global failTime
     global lastPostSuccess
     global curEmotion
     i = 0
     while True:
-        time.sleep(0.02)
         with lock:
             # print("Update frame")
             #get camera frame
             curFrame_byte = faceMask.show_frame(maskType=CUR_MASK, showMask=SHOWMASK, funMode=FUNMODE)
+            # cur_img_byte = copy.deepcopy(tmp_byte)
             if curFrame_byte is None:
                 print("curFrame_byte of none is returned")
                 return
+            CAM_ON = True
         yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + curFrame_byte + b'\r\n\r\n')
 
@@ -157,16 +160,19 @@ def getServerData():
 
 
 def get_emotion():
-    global cur_img_encoded
+    global cur_img_byte
     global curEmotion
     global failTime
     global lastPostSuccess
     while True:
         print("get_emotion()")
         fail_elapsed = time.perf_counter() - failTime
-        if cur_img_encoded is not None:# and (lastPostSuccess or fail_elapsed > 5):
-            print("Curframe is not empty")
+        if CAM_ON is True:# and (lastPostSuccess or fail_elapsed > 5):
             # print("Inside get emotion")
+            rectImg = faceMask.detector.get_rectImg()
+            if rectImg is None:
+                continue
+            _, cur_img_encoded = cv2.imencode('.jpg', rectImg)
             img_file = {'file': ('image.jpg', cur_img_encoded.tostring(), 'image/jpeg', {'Expires': '0'})}
             try:
                 response = requests.post(gpu_emotion_api_url, files=img_file)
