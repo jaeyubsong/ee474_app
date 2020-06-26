@@ -67,6 +67,25 @@ const getMyEmotionRequest = async () => {
 }
 
 
+const getServerDataRequest = async () => {
+    const result = await axios({
+      method: 'post',
+      url: '/getServerData',
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        'content-type': 'application/x-www-form-urlencoded',
+        "crossorigin": true,
+        'Access-Control-Allow-Methods': 'GET, PUT, POST, DELETE, OPTIONS',
+      },
+      // data: qs.stringify(data)
+    });
+    console.log("Data received:");
+    console.log(result);
+    console.log(result.data.myEmotion);
+    return result.data.myEmotion;
+  }
+
+
 // emotion = [SADNESS, FEAR, NEUTRAL, SURPRISE, DISGUST, HAPPINESS, ANGER]
 
 
@@ -81,7 +100,7 @@ function App() {
     userButtonRequest(showMask, funMode, maskType);
     const interval = setInterval(async () => {
       console.log("This will reun every second!'");
-      let curEmotion = await getMyEmotionRequest();
+      let curEmotion = await getServerDataRequest();
       setMyEmotion(curEmotion);
     }, 100);
     return () => clearInterval(interval);

@@ -4,13 +4,15 @@ import numpy as np
 import dlib
 from random import randint
 import argparse
+from threading import Thread
+import time
 from copy import copy, deepcopy
 from config import *
 from face_alignment import get_angle, rotate_opencv
 
 
 # Hyperparameter
-resize_size = 200.
+resize_size = 100.
 send_size = 48
 
 # global variable
@@ -267,6 +269,7 @@ class Cam:
         # self.curFrame = self.capture.read()[1]
         self.curFrame = None
         self.curSmallFrame = None
+    
 
     def update_frame(self):
         # if self.curFrame:
@@ -303,11 +306,13 @@ class Detector:
     # Detect landmark and headpose
     def detect(self, frame):
         # self.resetInternals()
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        if frame is None:
+            return
+        gray = frame
         ratio = resize_size / gray.shape[1]
         dim = (int(resize_size), int(gray.shape[0] * ratio))
         resized = cv2.resize(gray, dim, interpolation = cv2.INTER_AREA)
-        rects = detector(resized, 1)
+        rects = detector(resized, 3)
         if len(rects) == 0:
             return
         else:
@@ -418,23 +423,59 @@ class Detector:
         return self.rectLandmark
 
 
+ii = 0
+
 class FaceMask:
-    def __init__(self):
+    def __init__(self, cam_fps=30, detect_fps=7):
         self.cam = Cam()
         self.detector = Detector()
+        self.cam_fps = cam_fps
+        self.detect_fps = detect_fps
+        self.ms_between_cam = 1./self.cam_fps * 1000
+        self.ms_between_detect = 1./self.detect_fps * 1000
+        self.last_update = 0
+    
+    def start(self):
+        self.last_update = time.perf_counter_ns()
+        Thread(target=self.update_cam, args=()).start()
+        Thread(target=self.update_landmark, args=()).start()
+        # cur_frame = self.cam.get_curFrame()
+        # self.detector.detect(cur_frame)
+
+
+    def update_cam(self):
+        while True:
+            cur_time = time.perf_counter_ns()
+            elapsed_time_ms = (cur_time - self.last_update) / 1000000
+            if elapsed_time_ms > self.ms_between_cam:
+                print("Update cur frame")
+                self.cam.update_frame()
+
+    def update_landmark(self):
+        while True:
+            cur_time = time.perf_counter_ns()
+            elapsed_time_ms = (cur_time - self.last_update) / 1000000
+            if elapsed_time_ms > self.ms_between_detect:
+                print("Update landmark (elapsed time: %d" % elapsed_time_ms)
+                self.detector.detect(self.cam.get_curFrame())
+                self.last_update = cur_time
+
 
     def update_frame(self):
         self.cam.update_frame()
         cur_frame = self.cam.get_curFrame()
-        if cur_frame is None:
-            out.release()
-            exit()
+        # if cur_frame is None:
+        #     out.release()
+        #     exit()
         self.detector.detect(cur_frame)
     
     def show_frame(self, maskType=None, showMask=True, funMode=True, effectType=HAPPY_EMOJI):
+        print("Showframe called with maskType: %d, showMask: %r, funMode: %r" % (maskType, showMask, funMode))
         global surgicalMask
         global happy_emoji
         curFrame = self.cam.get_curFrame()
+        if curFrame is None:
+            return
         landmarks = self.detector.get_org_feature()
 
         for i in range(len(landmarks)):
@@ -458,10 +499,11 @@ class FaceMask:
                 # l = landmarks[i]['rect'][2]
                 # r = landmarks[i]['rect'][3]
                 # cv2.rectangle(curFrame, (l, t), (r, b), (0, 255, 0), 2)
-                curFrame = put_mask(inputImg=curFrame, landmark=landmark, maskType=maskType)
+                if len(landmark) > 0:
+                    curFrame = put_mask(inputImg=curFrame, landmark=landmark, maskType=maskType)
 
             if funMode == True:
-                if effectType == HAPPY_EMOJI:
+                if effectType == HAPPY_EMOJI and len(landmark) > 0:
                     curFrame = put_bg_effect(inputImg=curFrame, landmark=landmark, bgType=HAPPY_EMOJI)
 
             
@@ -474,7 +516,6 @@ class FaceMask:
         #     if effectType == HAPPY_EMOJI:
         #         curFrame = put_emoji_effect(inputImg=curFrame, landmark=landmark)
 
-
         curFrame = cv2.flip(curFrame, 1)
         ret, jpeg = cv2.imencode('.jpg', curFrame)
         if DEBUG:
@@ -483,6 +524,7 @@ class FaceMask:
                 exit()
         if out is not None:
             out.write(curFrame)
+        print("Returning processed jpeg")
         return jpeg.tobytes()
 
     def main(self):

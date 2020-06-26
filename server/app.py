@@ -1,4 +1,4 @@
-from flask import Flask, Response, render_template, request, jsonify
+from flask import Flask, Response, render_template, request, jsonify, stream_with_context
 import logging
 from local_landmark import FaceMask
 import threading
@@ -19,6 +19,7 @@ lock = threading.Lock()
 app = Flask(__name__)
 
 faceMask = FaceMask()
+faceMask.start()
 
 # Global variabble
 SHOWMASK = True
@@ -45,64 +46,22 @@ def get_frame():
     global curEmotion
     i = 0
     while True:
+        time.sleep(0.02)
         with lock:
             # print("Update frame")
             #get camera frame
-            faceMask.update_frame()
             curFrame_byte = faceMask.show_frame(maskType=CUR_MASK, showMask=SHOWMASK, funMode=FUNMODE)
-            # curFrame = copy.deepcopy(tmpFrame)
-            # print("show_frame masktype is %d" % CUR_MASK)
-        if showMask:
-            rectImg = faceMask.detector.get_rectImg()
-            landmark = faceMask.detector.get_rectLandmark()
-            if rectImg is not None:
-                with lock:
-                    # print("Encoding image")
-                    _, cur_img_encoded = cv2.imencode('.jpg', rectImg)
-                    # cur_img_encoded = copy.deepcopy(img_encoded)
-                # curFrame = np.co
-                # payload = {"landmark": landmark}
-                # img_file = {'file': ('image.jpg', img_encoded.tostring(), 'image/jpeg', {'Expires': '0'}),
-                #             'json': (None, json.dumps(payload), 'application/json'),}
-                # # send http request with image and receive response
-                # if lastPostSuccess or (time.perf_counter() - failTime) > 1.0:
-                #     try:
-                #         response = requests.post(gpu_emotion_api_url, files=img_file)
-                #         print(response.text)
-                #         json_response = json.loads(response.text)
-                #         print(json_response)
-                #         lastPostSuccess = True
-                #         curEmotion = json_response["emotion"]
-                #     except requests.exceptions.HTTPError as errh:
-                #         print ("Http Error:",errh)
-                #         failTime = time.perf_counter()
-                #         lastPostSuccess = False
-                #     except requests.exceptions.ConnectionError as errc:
-                #         print ("Error Connecting:",errc)
-                #         failTime = time.perf_counter()
-                #         lastPostSuccess = False
-                #     except requests.exceptions.Timeout as errt:
-                #         print ("Timeout Error:",errt)
-                #         failTime = time.perf_counter()
-                #         lastPostSuccess = False
-                #     except requests.exceptions.RequestException as err:
-                #         print ("OOps: Something Else",err)
-                #         failTime = time.perf_counter()
-                #         lastPostSuccess = False
-
-                # print(rectImg.shape)
-                # print(landmark)
-                # i = i + 1
-                # n = str(i)
-                # cv2.imwrite("image_processed_" + n + ".png", rectImg)
-
+            if curFrame_byte is None:
+                print("curFrame_byte of none is returned")
+                return
         yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + curFrame_byte + b'\r\n\r\n')
 
 
 @app.route('/stream', methods=['GET'])
 def stream():
-    return Response(get_frame(),
+    print("ASDSADD")
+    return Response(stream_with_context(get_frame()),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
@@ -187,14 +146,26 @@ def getMyEmotion():
     return response
 
 
+@app.route('/getServerData', methods=['POST'])
+def getServerData():
+    # global curEmotion
+    response = jsonify({'result': 'success', 'myEmotion': curEmotion})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    app.logger.info(response)
+    return response
+
+
 
 def get_emotion():
     global cur_img_encoded
     global curEmotion
+    global failTime
+    global lastPostSuccess
     while True:
-        # print("get_emotion()")
-        if cur_img_encoded is not None:
-            # print("Curframe is not empty")
+        print("get_emotion()")
+        fail_elapsed = time.perf_counter() - failTime
+        if cur_img_encoded is not None:# and (lastPostSuccess or fail_elapsed > 5):
+            print("Curframe is not empty")
             # print("Inside get emotion")
             img_file = {'file': ('image.jpg', cur_img_encoded.tostring(), 'image/jpeg', {'Expires': '0'})}
             try:
@@ -229,5 +200,5 @@ def get_emotion():
 if __name__ == '__main__':
     app.debug = False
     threading.Thread(target=get_emotion).start()
-    threading.Thread(target=app.run, kwargs=dict(host='0.0.0.0', port=5007, debug=False, use_reloader=False, threaded=True)).start()
-    # app.run(host='0.0.0.0', port=5007, debug=False, use_reloader=False, threaded=True)
+    # threading.Thread(target=app.run, kwargs=dict(host='0.0.0.0', port=5007, debug=False, use_reloader=False, threaded=True)).start()
+    app.run(host='0.0.0.0', port=5007, debug=False, use_reloader=False, threaded=True)
