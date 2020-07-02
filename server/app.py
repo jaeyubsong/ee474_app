@@ -205,6 +205,6 @@ def get_emotion():
 
 if __name__ == '__main__':
     app.debug = False
-    threading.Thread(target=get_emotion).start()
+    # threading.Thread(target=get_emotion).start()
     # threading.Thread(target=app.run, kwargs=dict(host='0.0.0.0', port=5007, debug=False, use_reloader=False, threaded=True)).start()
     app.run(host='0.0.0.0', port=5007, debug=False, use_reloader=False, threaded=True)

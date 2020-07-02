@@ -324,15 +324,22 @@ class Detector:
             # self.rects = copy.deepcopy(rects)
             cur_ld = cur_ld + 1
         else:
-            
             cur_ld = 0
         if len(rects) == 0:
+            print("Returned as there is no rect")
             return
-        else:
-            self.resetInternals()
+        # else:
+        #     self.resetInternals()
         print(rects)
         # copied_rect = copy.deepcopy(rects)
         # print(copied_rect)
+        # past_feature = copy.deepcopy(self.feature)
+        # past_org_feature = copy.deepcopy(self.org_feature)
+        # past_transMat = copy.deepcopy(self.transMat)
+        # past_rotMat = copy.deepcopy(self.rotMat)
+        # past_rectImg = self.rectImg
+        # past_rectLandmark = copy.deepcopy(self.rectLandmark)
+
         for i, rect in enumerate(rects):
             t = rect.top()
             b = rect.bottom()
@@ -342,6 +349,12 @@ class Detector:
             org_b = int(b/ratio)
             org_l = int(l/ratio)
             org_r = int(r/ratio)
+            shape = predictor(resized, rect)
+            if shape is None:
+                print("No landmark detected")
+                return
+            else:
+                self.resetInternals()
 
             self.feature.append({})
             self.feature[i]['rect'] = [t, b, l ,r]
@@ -363,9 +376,7 @@ class Detector:
 
 
             # Detect landmark                
-            shape = predictor(resized, rect)
-            if shape is None:
-                retnurn
+
             for j in range(68):
                 x, y = shape.part(j).x, shape.part(j).y
                 org_x, org_y = int(x/ratio), int(y/ratio)
@@ -495,6 +506,7 @@ class FaceMask:
         if curFrame is None:
             return
         landmarks = self.detector.get_org_feature()
+
 
         for i in range(len(landmarks)):
             landmark = landmarks[i]['landmark']
