@@ -13,6 +13,16 @@ import copy
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Process
 import threading
+import pyscreenshot as ImageGrab
+
+
+# # grab fullscreen
+# im = ImageGrab.grab(bbox=(10, 10, 2000, 1000))  # X1,Y1,X2,Y2
+
+# # save image file
+# im.save('box.png')
+# exit()
+
 
 
 lock = threading.Lock()
@@ -20,6 +30,7 @@ app = Flask(__name__)
 
 faceMask = FaceMask()
 faceMask.start()
+
 
 # Global variabble
 CAM_ON = False
@@ -33,6 +44,7 @@ landmark = None
 failTime = 0
 lastPostSuccess = True
 gpu_emotion_api_url = 'http://localhost:7007/emotion'
+gpu_audienceInfo_api_url = 'http://localhost:7008/audienceInfo'
 
 @app.route('/')
 def index():
@@ -48,6 +60,7 @@ def get_frame():
     global curEmotion
     i = 0
     while True:
+        time.sleep(0.05)
         with lock:
             # print("Update frame")
             #get camera frame
@@ -166,6 +179,7 @@ def get_emotion():
     global lastPostSuccess
     while True:
         print("get_emotion()")
+        # time.sleep(0.)
         fail_elapsed = time.perf_counter() - failTime
         if CAM_ON is True:# and (lastPostSuccess or fail_elapsed > 5):
             # print("Inside get emotion")
@@ -200,11 +214,60 @@ def get_emotion():
         # else:
         #     print("Curframe is empty")
 
+
+def get_audienceInfo():
+    global cur_img_byte
+    global curEmotion
+    global failTime
+    global lastPostSuccess
+    while True:
+        print("get_audienceInfo()")
+        # part of the screen
+        im = ImageGrab.grab(bbox=(10, 10, 2000, 1000))  # X1,Y1,X2,Y2
+
+        # save image file
+        im.save('box.png')
+        # # time.sleep(0.)
+        # fail_elapsed = time.perf_counter() - failTime
+        # if CAM_ON is True:# and (lastPostSuccess or fail_elapsed > 5):
+        #     # print("Inside get emotion")
+        #     rectImg = faceMask.detector.get_rectImg()
+        #     if rectImg is None:
+        #         continue
+        #     _, cur_img_encoded = cv2.imencode('.jpg', rectImg)
+        #     img_file = {'file': ('image.jpg', cur_img_encoded.tostring(), 'image/jpeg', {'Expires': '0'})}
+        #     try:
+        #         response = requests.post(gpu_emotion_api_url, files=img_file)
+        #         print(response.text)
+        #         json_response = json.loads(response.text)
+        #         print(json_response)
+        #         lastPostSuccess = True
+        #         curEmotion = json_response["emotion"]
+        #     except requests.exceptions.HTTPError as errh:
+        #         print ("Http Error:",errh)
+        #         failTime = time.perf_counter()
+        #         lastPostSuccess = False
+        #     except requests.exceptions.ConnectionError as errc:
+        #         print ("Error Connecting:",errc)
+        #         failTime = time.perf_counter()
+        #         lastPostSuccess = False
+        #     except requests.exceptions.Timeout as errt:
+        #         print ("Timeout Error:",errt)
+        #         failTime = time.perf_counter()
+        #         lastPostSuccess = False
+        #     except requests.exceptions.RequestException as err:
+        #         print ("OOps: Something Else",err)
+        #         failTime = time.perf_counter()
+        #         lastPostSuccess = False
+        # else:
+        #     print("Curframe is empty")
+
 # executor = ThreadPoolExecutor(max_workers=2)
 # a = executor.submit(get_emotion)
 
 if __name__ == '__main__':
     app.debug = False
-    # threading.Thread(target=get_emotion).start()
+    Process(target=get_emotion).start()
+    Process(target=get_audienceInfo).start()
     # threading.Thread(target=app.run, kwargs=dict(host='0.0.0.0', port=5007, debug=False, use_reloader=False, threaded=True)).start()
     app.run(host='0.0.0.0', port=5007, debug=False, use_reloader=False, threaded=True)
