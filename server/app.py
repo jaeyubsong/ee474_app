@@ -23,8 +23,8 @@ faceMask.start()
 
 # Global variabble
 CAM_ON = False
-SHOWMASK = True
-FUNMODE = True
+SHOWMASK = False
+FUNMODE = False
 CUR_MASK = SURGICALMASK
 cur_img_byte = None
 rectImg = None
