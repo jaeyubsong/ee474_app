@@ -6,7 +6,7 @@ from config import *
 from util import checkIfInt
 import json
 import cv2
-import numpy as numpy
+import numpy as np
 import requests
 import time
 import copy
@@ -43,6 +43,7 @@ curEmotion = 0
 landmark = None
 failTime = 0
 lastPostSuccess = True
+emotion_stat = [0, 0, 0, 0, 0]
 gpu_emotion_api_url = 'http://localhost:7007/emotion'
 gpu_audienceInfo_api_url = 'http://localhost:7008/audienceInfo'
 
@@ -60,6 +61,7 @@ def get_frame():
     global curEmotion
     i = 0
     while True:
+        print("get frame called")
         time.sleep(0.05)
         with lock:
             # print("Update frame")
@@ -164,10 +166,14 @@ def getMyEmotion():
 
 @app.route('/getServerData', methods=['POST'])
 def getServerData():
+    global CAM_ON
+    app.logger.info("get server data called")
+    print("get server data called")
     # global curEmotion
     response = jsonify({'result': 'success', 'myEmotion': curEmotion})
     response.headers.add('Access-Control-Allow-Origin', '*')
     app.logger.info(response)
+    CAM_ON = True
     return response
 
 
@@ -179,10 +185,10 @@ def get_emotion():
     global lastPostSuccess
     while True:
         print("get_emotion()")
-        # time.sleep(0.)
+        time.sleep(0.1)
         fail_elapsed = time.perf_counter() - failTime
-        if CAM_ON is True:# and (lastPostSuccess or fail_elapsed > 5):
-            # print("Inside get emotion")
+        if CAM_ON == True:# and (lastPostSuccess or fail_elapsed > 5):
+            print("Inside get emotion")
             rectImg = faceMask.detector.get_rectImg()
             if rectImg is None:
                 continue
@@ -211,8 +217,8 @@ def get_emotion():
                 print ("OOps: Something Else",err)
                 failTime = time.perf_counter()
                 lastPostSuccess = False
-        # else:
-        #     print("Curframe is empty")
+        else:
+            print("Cam is off")
 
 
 def get_audienceInfo():
@@ -220,54 +226,56 @@ def get_audienceInfo():
     global curEmotion
     global failTime
     global lastPostSuccess
+    global emotion_stat
     while True:
         print("get_audienceInfo()")
         # part of the screen
-        im = ImageGrab.grab(bbox=(10, 10, 2000, 1000))  # X1,Y1,X2,Y2
+        screenShot = ImageGrab.grab(bbox=(10, 10, 2000, 1000))  # X1,Y1,X2,Y2
+        screenShot.save('box.png')
 
+        screenShot_cv = np.array(screenShot.getdata(), dtype = 
+'uint8').reshape((screenShot.size[1], screenShot.size[0], 3))
         # save image file
-        im.save('box.png')
-        # # time.sleep(0.)
-        # fail_elapsed = time.perf_counter() - failTime
-        # if CAM_ON is True:# and (lastPostSuccess or fail_elapsed > 5):
-        #     # print("Inside get emotion")
-        #     rectImg = faceMask.detector.get_rectImg()
-        #     if rectImg is None:
-        #         continue
-        #     _, cur_img_encoded = cv2.imencode('.jpg', rectImg)
-        #     img_file = {'file': ('image.jpg', cur_img_encoded.tostring(), 'image/jpeg', {'Expires': '0'})}
-        #     try:
-        #         response = requests.post(gpu_emotion_api_url, files=img_file)
-        #         print(response.text)
-        #         json_response = json.loads(response.text)
-        #         print(json_response)
-        #         lastPostSuccess = True
-        #         curEmotion = json_response["emotion"]
-        #     except requests.exceptions.HTTPError as errh:
-        #         print ("Http Error:",errh)
-        #         failTime = time.perf_counter()
-        #         lastPostSuccess = False
-        #     except requests.exceptions.ConnectionError as errc:
-        #         print ("Error Connecting:",errc)
-        #         failTime = time.perf_counter()
-        #         lastPostSuccess = False
-        #     except requests.exceptions.Timeout as errt:
-        #         print ("Timeout Error:",errt)
-        #         failTime = time.perf_counter()
-        #         lastPostSuccess = False
-        #     except requests.exceptions.RequestException as err:
-        #         print ("OOps: Something Else",err)
-        #         failTime = time.perf_counter()
-        #         lastPostSuccess = False
-        # else:
-        #     print("Curframe is empty")
+        # time.sleep(0.)
+        fail_elapsed = time.perf_counter() - failTime
+        _, cur_img_encoded = cv2.imencode('.jpg', screenShot_cv)
+        img_file = {'file': ('image.jpg', cur_img_encoded.tostring(), 'image/jpeg', {'Expires': '0'})}
+        try:
+            response = requests.post(gpu_audienceInfo_api_url, files=img_file)
+            print(response.text)
+            json_response = json.loads(response.text)
+            print(json_response)
+            lastPostSuccess = True
+            emotion_stat[0] = json_response["astonished"]
+            emotion_stat[1] = json_response["unsatisfied"]
+            emotion_stat[2] = json_response["joyful"]
+            emotion_stat[3] = json_response["neutral"]
+            emotion_stat[4] = json_response["sad"]
+            print("Emotion stat is as follows")
+            print(emotion_stat)
+        except requests.exceptions.HTTPError as errh:
+            print ("Http Error:",errh)
+            failTime = time.perf_counter()
+            lastPostSuccess = False
+        except requests.exceptions.ConnectionError as errc:
+            print ("Error Connecting:",errc)
+            failTime = time.perf_counter()
+            lastPostSuccess = False
+        except requests.exceptions.Timeout as errt:
+            print ("Timeout Error:",errt)
+            failTime = time.perf_counter()
+            lastPostSuccess = False
+        except requests.exceptions.RequestException as err:
+            print ("OOps: Something Else",err)
+            failTime = time.perf_counter()
+            lastPostSuccess = False
 
 # executor = ThreadPoolExecutor(max_workers=2)
 # a = executor.submit(get_emotion)
 
 if __name__ == '__main__':
     app.debug = False
-    Process(target=get_emotion).start()
-    Process(target=get_audienceInfo).start()
+    threading.Thread(target=get_emotion).start()
+    threading.Thread(target=get_audienceInfo).start()
     # threading.Thread(target=app.run, kwargs=dict(host='0.0.0.0', port=5007, debug=False, use_reloader=False, threaded=True)).start()
     app.run(host='0.0.0.0', port=5007, debug=False, use_reloader=False, threaded=True)
