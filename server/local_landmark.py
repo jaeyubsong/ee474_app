@@ -455,7 +455,7 @@ class Detector:
 ii = 0
 
 class FaceMask:
-    def __init__(self, cam_fps=30, detect_fps=20):
+    def __init__(self, cam_fps=30, detect_fps=10):
         self.cam = Cam()
         self.detector = Detector()
         self.cam_fps = cam_fps

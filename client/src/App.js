@@ -124,7 +124,7 @@ const getServerDataRequest = async () => {
     console.log("Data received:");
     console.log(result);
     console.log(result.data.myEmotion);
-    return result.data.myEmotion;
+    return result.data;
   }
 
 // const changeStatGraph = (astonished, unsatisfied, joyful, neutral, sad) => {
@@ -254,10 +254,13 @@ function App() {
 
       // changeStatGraph(astonished_angle, unsatisfied_angle, joyful_angle, neutral_angle, sad_angle)
       console.log("This will reun every second!'");
-      let curEmotion = await getServerDataRequest()
+      let serverData = await getServerDataRequest()
+      let curEmotion = serverData.myEmotion
+
+
       // let curEmotion = await setEmotionRequest(myEmotion);
       setMyEmotion(curEmotion);
-
+      changeEmotionStat(serverData.astonished, serverData.unsatisfied, serverData.joyful, serverData.neutral, serverData.sad)
 
     }, 200);
     return () => clearInterval(interval);

@@ -170,7 +170,9 @@ def getServerData():
     app.logger.info("get server data called")
     print("get server data called")
     # global curEmotion
-    response = jsonify({'result': 'success', 'myEmotion': curEmotion})
+    response = jsonify({'result': 'success', 'myEmotion': curEmotion, 'astonished': emotion_stat[0], 
+                        'unsatisfied': emotion_stat[1], 'joyful': emotion_stat[2], 
+                        'neutral': emotion_stat[3], 'sad': emotion_stat[4]})
     response.headers.add('Access-Control-Allow-Origin', '*')
     app.logger.info(response)
     CAM_ON = True

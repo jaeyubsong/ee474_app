@@ -28,6 +28,7 @@ $ conda install -c conda-forge opencv=4.2.0=py37_7
 $ conda install -c conda-forge dlib
 $ conda install -c anaconda flask
 $ conda install -c anaconda pillow
+$ pip install pyscreenshot
 ```
 
 - Then, go to client folder and setup npm
