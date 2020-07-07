@@ -45,17 +45,17 @@ $ bzip2 -d shape_predictor_68_face_landmarks.dat.bz2
 ```
 
 ### In order to start the app
-- First, turn on the server first
+- First, turn on the backend first
 ```
-$ cd server
+$ cd backend
 $ python app.py
 ```
-- Then, turn on the client
+- Then, turn on the frontend
 ```
-$ cd client
+$ cd frontend
 $ npm start
 ```
-- Finally, access the client in http://localhost:3007
+- Finally, access the frontend in http://localhost:3007
 
-- Flask server: http://localhost:5007
-- React client: http://localhost:3007
+- Flask backend: http://localhost:5007
+- React frontend: http://localhost:3007

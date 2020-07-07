@@ -1,2 +1,2 @@
-server/shape_predictor_68_face_landmarks.dat
-server/shape_predictor_68_face_landmarks.dat.bz2
+backend/shape_predictor_68_face_landmarks.dat
+backend/shape_predictor_68_face_landmarks.dat.bz2
