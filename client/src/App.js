@@ -146,6 +146,7 @@ function App() {
   const [showMask, setShowMask] = useState(false);
   const [funMode, setFunMode] = useState(false);
   const [myEmotion, setMyEmotion] = useState(0);
+  const [drowsy, setDrowsy] = useState(0);
   const [myEmoji, setMyEmoji] = useState([
     './emoji/neutral/neutral_e(1).png', 
     './emoji/neutral/netural_m(1).png',
@@ -401,7 +402,8 @@ function App() {
             
           </Flex>
           <Flex flex={0.6} margin="0 0 0 5px">
-          imgSource
+          {/* imgSource */}
+          <img src={'/getAudienceCombined'} width="700px" style={{marginTop: '5px'}}/>
             {/* <img src={require('./gender/0.png')} width="800px" style={{marginTop: '5px', marginBottom: '-55px'}}/> */}
             {/* <img src={imgSource(curImageShow)} width="800px" style={{marginTop: '5px', marginBottom: '-55px'}}/> */}
             <Flex container justifyContent="justify-content">
@@ -430,7 +432,7 @@ function App() {
                 Sad={emotionData[4].angle}%
                 </h5>
                 <h5 style={{marginLeft: '0px', marginTop: 'px'}}>
-                  Sleepy audience: Undefined for now
+                  Sleepy audience: {drowsy}
                 </h5>
               </Flex>
 

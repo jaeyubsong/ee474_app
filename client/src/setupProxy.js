@@ -24,4 +24,8 @@ module.exports = function(app){
     target: 'http://localhost:5007', changedOrigin: true,
     })
   );
+  app.use('/getAudienceCombined', createProxyMiddleware({ 
+    target: 'http://localhost:7008', changedOrigin: true,
+    })
+  );
 }
