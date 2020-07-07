@@ -4,34 +4,19 @@
 - Application for ee474 project
 - Environment created by conda
 
+Demo is available at [demo video](https://www.youtube.com/watch?v=uVZ_6LMGjxI&feature=youtu.be)
+
 
 ## Getting Started
 
-Let's set up the environment
-
 ### Prerequisites
 
-- anaconda (version 4.8.3 is used)
 - npm (version 6.2.0 is used)
 - nodejs (version 10.8.0 is used)
 
-### Setting up the environment
-- Setup anaconda environment
-```
-$ conda env create -f environment.yml
-```
 
-- If creating the environment with environment.yml does not work, try the following
-```
-$ conda create --name ee474_app python=3.7
-$ conda install -c conda-forge opencv=4.2.0=py37_7
-$ conda install -c conda-forge dlib
-$ conda install -c anaconda flask
-$ conda install -c anaconda pillow
-$ pip install pyscreenshot
-```
-
-- Then, go to client folder and setup npm
+- We recommend using anaconda to set up the environment
+- In order to start the app,
 ```
 $ cd client
 $ npm install
